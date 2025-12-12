@@ -3,7 +3,6 @@ import {
 	Editor,
 	MarkdownView,
 	Modal,
-	Notice,
 	Plugin,
 	PluginSettingTab,
 	Setting,
@@ -32,7 +31,7 @@ export default class HandWrittenPlugin extends Plugin {
 			"Scanner",
 			(_evt: MouseEvent) => {
 				// Called when the user clicks the icon.
-				new ScannerModal(this.app, (result) => {new Notice(`Hello ${result}`)}).open();
+				new ScannerModal(this.app).open();
 			},
 		);
 		// Perform additional things with the ribbon
@@ -95,7 +94,7 @@ export default class HandWrittenPlugin extends Plugin {
 		);
 	}
 
-	onunload() {}
+	onunload() { }
 
 	async loadSettings() {
 		this.settings = Object.assign(
