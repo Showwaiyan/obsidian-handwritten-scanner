@@ -12,14 +12,17 @@ export class ScannerModal extends Modal {
 		this.container = this.contentEl.createDiv("scanner-modal-container");
 		this.canvas = new ImagePreview(
 			this.container,
-			this.container.createEl("canvas"),
+			this.container.createEl("canvas",{
+				cls: ""
+			}),
+			3/4
 		);
 	}
 
 	async onOpen() {
 		new Notice("Scan-Sketch plugin loaded");
 		
-		this.canvas.setup(this.container.clientWidth,this.container.clientHeight);
+		this.canvas.setup();
 	}
 
 	async onClose() {}
