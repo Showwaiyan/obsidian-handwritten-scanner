@@ -7,7 +7,6 @@ export class ScannerModal extends Modal {
 		super(app);
 		this.setTitle("Scan Your Note");
 		this.container = this.contentEl.createDiv();
-		this.camera = new Camera(this.container);
 	}
 
 	async onOpen() {
