@@ -1,25 +1,20 @@
 import { App, Modal, Notice } from "obsidian";
 
 export class ScannerModal extends Modal {
-	container: HTMLElement;
+	private container: HTMLElement;
 
 	constructor(app: App) {
 		super(app);
 		this.setTitle("Scan Your Note");
-		this.container = this.contentEl.createDiv();
+		this.container = this.contentEl.createDiv("scanner-modal-container");
 	}
 
 	async onOpen() {
-         this.modalEl.style.width = "90vw";                    
-         this.modalEl.style.height = "80vh";                   
-                                                               
-         this.container.style.width = "100%";                  
-         this.container.style.height = "100%";                 
-         this.container.style.display = "flex";                
-         this.container.style.justifyContent = "center";       
-         this.container.style.alignItems = "center";           
-	}
+		new Notice("Scan-Sketch plugin loaded")
 
-	async onClose() {
+		this.modalEl.addClass("scanner-modal");
 	}
+	
+
+	async onClose() {}
 }
