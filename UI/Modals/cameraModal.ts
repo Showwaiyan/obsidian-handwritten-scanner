@@ -1,32 +1,26 @@
 import { App, Modal, Notice } from "obsidian";
-import { Camera } from "Services/CameraServices";
 
 export class ScannerModal extends Modal {
-	camera: Camera;
+	container: HTMLElement;
 
 	constructor(app: App) {
 		super(app);
 		this.setTitle("Scan Your Note");
-		this.camera = new Camera(this.contentEl);
+		this.container = this.contentEl.createDiv();
+		this.camera = new Camera(this.container);
 	}
 
 	async onOpen() {
-		this.modalEl.style.width = "90vw";
-		this.modalEl.style.height = "80vh";
-		// Create video element
-		// Get User Media
-		try {
-			this.camera.attachCamera();
-		} catch (error) {
-			new Notice(`Something Went Wrong.\nError: ${error.message}`);
-			return;
-		}
-		// Get the Stream
-		// Set video srcObject to that media
+         this.modalEl.style.width = "90vw";                    
+         this.modalEl.style.height = "80vh";                   
+                                                               
+         this.container.style.width = "100%";                  
+         this.container.style.height = "100%";                 
+         this.container.style.display = "flex";                
+         this.container.style.justifyContent = "center";       
+         this.container.style.alignItems = "center";           
 	}
 
 	async onClose() {
-		// Close steam's each track
-		this.camera.detachCamera();
 	}
 }
