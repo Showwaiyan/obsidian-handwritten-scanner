@@ -31,7 +31,7 @@ export class ImagePreview {
 	private resize() {
 		const parentWidth = this.parent.clientWidth;
 		
-		const width: number = parentWidth/2;
+		const width: number = parentWidth/1.4;
 		const height: number = width / this.ratio;
 
 		/*
@@ -81,7 +81,7 @@ export class ImagePreview {
 		this.ctx.textBaseline = "top";
 
 		// Primary text
-		const primaryFontSize = Math.max(14, Math.min(cssWidth, cssHeight) / 30) * dpr;
+		const primaryFontSize = Math.max(16, Math.min(cssWidth, cssHeight) / 20);
 		this.ctx.font = `${primaryFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
 		this.ctx.fillText(
 			"Upload or take a picture",
@@ -90,7 +90,7 @@ export class ImagePreview {
 		);
 
 		// Secondary text
-		const secondaryFontSize = Math.max(12, Math.min(cssWidth, cssHeight) / 40) * dpr;
+		const secondaryFontSize = Math.max(12, Math.min(cssWidth, cssHeight) / 40);
 		this.ctx.font = `${secondaryFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
 		this.ctx.fillStyle = "#aaaaaa";
 		this.ctx.fillText(
@@ -102,12 +102,11 @@ export class ImagePreview {
 
 	private drawImageIcon(x: number, y: number, size: number) {
 		const ctx = this.ctx;
-		const dpr = window.devicePixelRatio || 1;
 		
 		ctx.save();
 		ctx.strokeStyle = "#888888";
 		ctx.fillStyle = "#888888";
-		ctx.lineWidth = 2 * dpr;
+		ctx.lineWidth = 2;
 		ctx.lineCap = "round";
 		ctx.lineJoin = "round";
 
