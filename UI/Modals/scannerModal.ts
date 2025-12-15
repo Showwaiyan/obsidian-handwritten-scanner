@@ -1,4 +1,5 @@
 import { App, ButtonComponent, Modal, Notice } from "obsidian";
+import { uploadImageToCanvas } from "Services/ImageUpload";
 import { ImagePreview } from "UI/Components/ImagePreview";
 
 export class ScannerModal extends Modal {
@@ -37,7 +38,7 @@ export class ScannerModal extends Modal {
 		.setIcon("image")
 		.setTooltip("Upload image from gallery")
 		.setCta()
-		.onClick(() => new Notice("Button worked"));
+		.onClick(() => uploadImageToCanvas(this.canvas.darawImage.bind(this.canvas)));
 	}
 
 	async onClose() {}

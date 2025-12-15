@@ -3,6 +3,13 @@ export class ImagePreview {
 	private canvas: HTMLCanvasElement;
 	private ctx: CanvasRenderingContext2D;
 	private ratio: number;
+	private img: HTMLImageElement;
+	
+	// Store image position and dimensions for future reference
+	private imgX: number;
+	private imgY: number;
+	private imgWidth: number;
+	private imgHeight: number;
 
 	constructor(
 		parent: HTMLElement,
@@ -30,8 +37,8 @@ export class ImagePreview {
 
 	private resize() {
 		const parentWidth = this.parent.clientWidth;
-		
-		const width: number = parentWidth/1.4;
+
+		const width: number = parentWidth / 1.4;
 		const height: number = width / this.ratio;
 
 		/*
@@ -58,9 +65,9 @@ export class ImagePreview {
 		const cssWidth = parseInt(this.canvas.style.width);
 		const cssHeight = parseInt(this.canvas.style.height);
 		const dpr = window.devicePixelRatio || 1;
-		
-		console.log('Canvas dimensions:', cssWidth, cssHeight, 'DPR:', dpr);
-		
+
+		console.log("Canvas dimensions:", cssWidth, cssHeight, "DPR:", dpr);
+
 		// Clear canvas (use CSS dimensions because of DPR transform)
 		this.ctx.clearRect(0, 0, cssWidth, cssHeight);
 
@@ -81,7 +88,10 @@ export class ImagePreview {
 		this.ctx.textBaseline = "top";
 
 		// Primary text
-		const primaryFontSize = Math.max(16, Math.min(cssWidth, cssHeight) / 20);
+		const primaryFontSize = Math.max(
+			16,
+			Math.min(cssWidth, cssHeight) / 20,
+		);
 		this.ctx.font = `${primaryFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
 		this.ctx.fillText(
 			"Upload or take a picture",
@@ -90,7 +100,10 @@ export class ImagePreview {
 		);
 
 		// Secondary text
-		const secondaryFontSize = Math.max(12, Math.min(cssWidth, cssHeight) / 40);
+		const secondaryFontSize = Math.max(
+			12,
+			Math.min(cssWidth, cssHeight) / 40,
+		);
 		this.ctx.font = `${secondaryFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
 		this.ctx.fillStyle = "#aaaaaa";
 		this.ctx.fillText(
@@ -102,7 +115,7 @@ export class ImagePreview {
 
 	private drawImageIcon(x: number, y: number, size: number) {
 		const ctx = this.ctx;
-		
+
 		ctx.save();
 		ctx.strokeStyle = "#888888";
 		ctx.fillStyle = "#888888";
@@ -114,7 +127,7 @@ export class ImagePreview {
 		const frameSize = size;
 		const frameX = x - frameSize / 2;
 		const frameY = y - frameSize / 2;
-		
+
 		ctx.strokeRect(frameX, frameY, frameSize, frameSize);
 
 		// Draw mountain/landscape icon inside
@@ -139,10 +152,52 @@ export class ImagePreview {
 			frameY + frameSize * 0.25,
 			frameSize * 0.1,
 			0,
-			Math.PI * 2
+			Math.PI * 2,
 		);
 		ctx.fill();
 
 		ctx.restore();
+	}
+
+	public darawImage(file: File) {
+		this.img = new Image();
+
+		this.img.onload = () => {
+			// Get CSS dimensions (because we're using DPR transform)
+			const cssWidth = parseInt(this.canvas.style.width);
+			const cssHeight = parseInt(this.canvas.style.height);
+
+			// Clear canvas and fill with black background (letterbox bars)
+			this.ctx.clearRect(0, 0, cssWidth, cssHeight);
+			this.ctx.fillStyle = "#000000";
+			this.ctx.fillRect(0, 0, cssWidth, cssHeight);
+
+			// Calculate scale to fit image inside canvas (contain behavior)
+			const scale = Math.min(
+				cssWidth / this.img.width,
+				cssHeight / this.img.height,
+			);
+
+			// Calculate scaled dimensions
+			const scaledWidth = this.img.width * scale;
+			const scaledHeight = this.img.height * scale;
+
+			// Calculate position to center the image
+			const x = (cssWidth - scaledWidth) / 2;
+			const y = (cssHeight - scaledHeight) / 2;
+
+			// Store image position and dimensions for future reference
+			this.imgX = x;
+			this.imgY = y;
+			this.imgWidth = scaledWidth;
+			this.imgHeight = scaledHeight;
+
+			// Draw the image centered with letterboxing
+			this.ctx.drawImage(this.img, x, y, scaledWidth, scaledHeight);
+			
+			URL.revokeObjectURL(this.img.src);
+		};
+		
+		this.img.src = URL.createObjectURL(file);
 	}
 }
