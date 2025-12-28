@@ -7,7 +7,8 @@ export class ScannerModal extends Modal {
 	private buttonWrapper: HTMLElement;
 	private canvas: ImagePreview;
 	private btnPhotoUpload: ButtonComponent;
-	private btnPhotoRotate: ButtonComponent;
+	private btnPhotoRotateCW: ButtonComponent;
+	private btnPhotoRotateACW: ButtonComponent;
 
 	constructor(app: App) {
 		super(app);
@@ -43,10 +44,14 @@ export class ScannerModal extends Modal {
 				uploadImageToCanvas(this.canvas.darawImage.bind(this.canvas)),
 			);
 
-		this.btnPhotoRotate = new ButtonComponent(this.buttonWrapper)
+		this.btnPhotoRotateCW = new ButtonComponent(this.buttonWrapper)
 			.setIcon("rotate-cw")
 			.setTooltip("Rotate image 90° clockwise")
 			.onClick(() => this.canvas.rotate(90));
+		this.btnPhotoRotateACW = new ButtonComponent(this.buttonWrapper)
+			.setIcon("rotate-ccw")
+			.setTooltip("Rotate image 90° counter-clockwise")
+			.onClick(() => this.canvas.rotate(-90));
 	}
 
 	async onClose() {}
