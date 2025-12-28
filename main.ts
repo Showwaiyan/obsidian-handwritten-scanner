@@ -43,8 +43,8 @@ export default class HandWrittenPlugin extends Plugin {
 
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: "scan-note",
-			name: "Scan a note",
+			id: "scan-sketch",
+			name: "Scan a sketch",
 			callback: () => {
 				new ScannerModal(this.app).open();
 			},
