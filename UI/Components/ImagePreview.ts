@@ -14,6 +14,10 @@ export class ImagePreview {
 	// for continous rotation
 	private toRotateDegree: number;
 
+	// for cropping points
+	private croppingPointsVisible: boolean;
+	private cropPoints: { x: number; y: number }[];
+
 	constructor(
 		parent: HTMLElement,
 		element: HTMLCanvasElement,
@@ -31,6 +35,8 @@ export class ImagePreview {
 
 		this.parent.appendChild(this.canvas);
 		this.toRotateDegree = 0;
+		this.croppingPointsVisible = false;
+		this.cropPoints = [];
 
 		// Wait for next frame to ensure parent has dimensions
 		requestAnimationFrame(() => {
@@ -205,56 +211,132 @@ export class ImagePreview {
 		this.img.src = URL.createObjectURL(file);
 	}
 
-	public rotate(degree: number) {
-		// Clear the canvas, so current image is clear and to make clean state to save
-		this.ctx.clearRect(
-			0,
-			0,
-			parseInt(this.canvas.style.width),
-			parseInt(this.canvas.style.height),
-		);
+	private redrawImage() {
+		// Get CSS dimensions
+		const cssWidth = parseInt(this.canvas.style.width);
+		const cssHeight = parseInt(this.canvas.style.height);
 
+		// Clear canvas and fill with black background (letterbox bars)
+		this.ctx.clearRect(0, 0, cssWidth, cssHeight);
 		this.ctx.fillStyle = "#000000";
-		this.ctx.fillRect(
-			0,
-			0,
-			parseInt(this.canvas.style.width),
-			parseInt(this.canvas.style.height),
-		);
+		this.ctx.fillRect(0, 0, cssWidth, cssHeight);
 
-		const cacheCanvasWidth: number = parseInt(this.canvas.style.width);
-		const cacheCanvasHeight: number = parseInt(this.canvas.style.height);
+		// Check if image was rotated
+		if (this.toRotateDegree !== 0) {
+			// Redraw with rotation
+			const rad = (this.toRotateDegree * Math.PI) / 180;
+			const sin = Math.abs(Math.sin(rad));
+			const cos = Math.abs(Math.cos(rad));
 
+			const newWidth = this.imgWidth * cos + this.imgHeight * sin;
+			const newHeight = this.imgWidth * sin + this.imgHeight * cos;
+
+			const scale = Math.min(
+				cssWidth / newWidth,
+				cssHeight / newHeight,
+			);
+
+			this.ctx.save();
+			this.ctx.translate(cssWidth / 2, cssHeight / 2);
+			this.ctx.rotate(rad);
+			this.ctx.scale(scale, scale);
+
+			this.ctx.drawImage(
+				this.img,
+				-this.imgWidth / 2,
+				-this.imgHeight / 2,
+				this.imgWidth,
+				this.imgHeight,
+			);
+
+			this.ctx.restore();
+		} else {
+			// Redraw without rotation
+			this.ctx.drawImage(this.img, this.imgX, this.imgY, this.imgWidth, this.imgHeight);
+		}
+	}
+
+	public rotate(degree: number) {
 		console.log("Rotation count:", this.toRotateDegree);
-
+		
+		// Update rotation degree
 		this.toRotateDegree = this.toRotateDegree + degree;
-		const rad = (this.toRotateDegree * Math.PI) / 180;
+		
+		// Redraw the image with new rotation
+		this.redrawImage();
+	}
 
-		const sin = Math.abs(Math.sin(rad));
-		const cos = Math.abs(Math.cos(rad));
-
-		const newWidth = this.imgWidth * cos + this.imgHeight * sin;
-
-		const newHeight = this.imgWidth * sin + this.imgHeight * cos;
-
-		const scale = Math.min(
-			cacheCanvasWidth / newWidth,
-			cacheCanvasHeight / newHeight,
-		);
+	private drawCroppingPoints() {
+		// Initialize crop points at four corners of the image
+		this.cropPoints = [
+			{ x: this.imgX, y: this.imgY }, // Top-left
+			{ x: this.imgX + this.imgWidth, y: this.imgY }, // Top-right
+			{ x: this.imgX, y: this.imgY + this.imgHeight }, // Bottom-left
+			{ x: this.imgX + this.imgWidth, y: this.imgY + this.imgHeight }, // Bottom-right
+		];
 
 		this.ctx.save();
-		this.ctx.translate(cacheCanvasWidth / 2, cacheCanvasHeight / 2);
-		this.ctx.rotate(rad);
-		this.ctx.scale(scale, scale);
 
-		this.ctx.drawImage(
-			this.img,
-			-this.imgWidth / 2,
-			-this.imgHeight / 2,
-			this.imgWidth,
-			this.imgHeight,
-		);
+		// Draw connecting lines between points
+		this.ctx.beginPath();
+		this.ctx.moveTo(this.cropPoints[0].x, this.cropPoints[0].y); // Top-left
+		this.ctx.lineTo(this.cropPoints[1].x, this.cropPoints[1].y); // Top-right
+		this.ctx.lineTo(this.cropPoints[3].x, this.cropPoints[3].y); // Bottom-right
+		this.ctx.lineTo(this.cropPoints[2].x, this.cropPoints[2].y); // Bottom-left
+		this.ctx.closePath();
+		this.ctx.strokeStyle = "#3b82f6";
+		this.ctx.lineWidth = 2;
+		this.ctx.stroke();
 
+		// Draw the crop points
+		this.cropPoints.forEach((point) => {
+			// Draw outer circle (white)
+			this.ctx.beginPath();
+			this.ctx.arc(point.x, point.y, 10, 0, Math.PI * 2);
+			this.ctx.fillStyle = "#ffffff";
+			this.ctx.fill();
+			this.ctx.strokeStyle = "#000000";
+			this.ctx.lineWidth = 2;
+			this.ctx.stroke();
+
+			// Draw inner circle (blue)
+			this.ctx.beginPath();
+			this.ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+			this.ctx.fillStyle = "#3b82f6";
+			this.ctx.fill();
+		});
 		this.ctx.restore();
+
+		this.croppingPointsVisible = true;
+	}
+
+	private removeCroppingPoints() {
+		if (!this.croppingPointsVisible) return;
+
+		// Redraw the image to remove the crop points
+		this.redrawImage();
+
+		this.cropPoints = [];
+		this.croppingPointsVisible = false;
+	}
+
+	public toggleCroppingPoints(show: boolean): { state: boolean; message: string } {
+		let state = false;
+		let message = "";
+		if (this.img == null) {
+			state = false;
+			message = "Please upload photo first!";
+		} else {
+			if (show) {
+				this.drawCroppingPoints();
+				state = true;
+				message = "Cropping points displayed";
+			} else {
+				this.removeCroppingPoints();
+				state = true;
+				message = "Cropping points removed";
+			}
+		}
+		return { state, message };
 	}
 }
