@@ -1,11 +1,12 @@
-import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
 
 interface HandwrittenScannerSettings {
-	exportDefaultFolder: string;
+	exportDefaultFolder?: string;
+	exportFolders: string[];
 }
 
 const DEFAULT_SETTINGS: HandwrittenScannerSettings = {
-	exportDefaultFolder: "Scanned",
+	exportFolders: ["Scanned"],
 };
 
 export default class HandWrittenPlugin extends Plugin {
@@ -45,6 +46,21 @@ export default class HandWrittenPlugin extends Plugin {
 			DEFAULT_SETTINGS,
 			await this.loadData(),
 		);
+
+		// Migration / Fallback: If exportFolders is empty or not an array, use exportDefaultFolder or default to ["Scanned"]
+		if (
+			!Array.isArray(this.settings.exportFolders) ||
+			this.settings.exportFolders.length === 0
+		) {
+			if (
+				this.settings.exportDefaultFolder &&
+				typeof this.settings.exportDefaultFolder === "string"
+			) {
+				this.settings.exportFolders = [this.settings.exportDefaultFolder];
+			} else {
+				this.settings.exportFolders = ["Scanned"];
+			}
+		}
 	}
 
 	async saveSettings() {
@@ -66,16 +82,60 @@ class HandwrittenScannerSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Default export folder")
-			.setDesc("Folder path where scanned images will be saved (e.g., 'Scanned' or 'Notes/Scans')")
-			.addText((text) =>
-				text
-					.setPlaceholder("Scanned")
-					.setValue(this.plugin.settings.exportDefaultFolder)
-					.onChange(async (value) => {
-						this.plugin.settings.exportDefaultFolder = value || "Scanned";
-						await this.plugin.saveSettings();
-					}),
+			.setName("Destination folders")
+			.setDesc(
+				"Manage destination folders for saving scanned images. In the export dialog, you can choose from these folders using a dropdown menu.",
 			);
+
+		const folders = this.plugin.settings.exportFolders;
+
+		folders.forEach((folderPath, index) => {
+			new Setting(containerEl)
+				.setName(folderPath.trim() === "" ? "Root folder (/)" : folderPath)
+				.addButton((button) => {
+					button
+						.setButtonText("Delete")
+						.setIcon("trash")
+						.setWarning()
+						.setTooltip("Remove this destination folder")
+						.onClick(async () => {
+							if (folders.length <= 1) {
+								new Notice("You must keep at least one destination folder.");
+								return;
+							}
+							folders.splice(index, 1);
+							await this.plugin.saveSettings();
+							this.display();
+						});
+				});
+		});
+
+		let newFolderPath = "";
+		new Setting(containerEl)
+			.setName("Add new destination folder")
+			.setDesc("Enter a folder path (e.g., 'Scanned' or 'Notes/Scans')")
+			.addText((text) => {
+				text
+					.setPlaceholder("Folder path")
+					.setValue(newFolderPath)
+					.onChange((val) => {
+						newFolderPath = val;
+					});
+			})
+			.addButton((button) => {
+				button
+					.setButtonText("Add folder")
+					.setCta()
+					.onClick(async () => {
+						const trimmed = newFolderPath.trim();
+						if (folders.includes(trimmed)) {
+							new Notice("This folder is already in your destination list.");
+							return;
+						}
+						folders.push(trimmed);
+						await this.plugin.saveSettings();
+						this.display();
+					});
+			});
 	}
 }

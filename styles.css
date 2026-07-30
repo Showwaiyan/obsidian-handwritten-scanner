@@ -615,6 +615,26 @@ If your plugin does not need CSS, delete this file.
 	border: 1px solid var(--background-modifier-border);
 }
 
+.export-folder-dropdown-wrapper {
+	width: 100%;
+}
+
+.export-folder-select {
+	width: 100%;
+	padding: 8px 12px;
+	background-color: var(--background-modifier-form-field);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	color: var(--text-normal);
+	font-size: 0.9em;
+	cursor: pointer;
+}
+
+.export-folder-select:focus {
+	border-color: var(--interactive-accent);
+	outline: none;
+}
+
 .export-folder-note {
 	margin-top: 8px;
 	font-size: 0.85em;

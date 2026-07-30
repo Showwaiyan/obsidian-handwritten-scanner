@@ -121,7 +121,7 @@ export class ScannerModal extends Modal {
 		this.exportControls = new ExportControls(
 			this.app,
 			() => this.canvas.getExportCanvas(),
-			this.plugin.settings.exportDefaultFolder,
+			this.plugin.settings.exportFolders,
 			() => this.canvas.isImageLoaded(),
 		);
 		this.btnExport = this.exportControls.createExportButton(this.buttonWrapper);

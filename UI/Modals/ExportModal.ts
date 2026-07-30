@@ -3,7 +3,7 @@
  * Provides UI for format selection, filename input, and folder configuration
  */
 
-import { App, Modal, Notice, ButtonComponent, TextComponent } from "obsidian";
+import { App, Modal, Notice, ButtonComponent, TextComponent, DropdownComponent } from "obsidian";
 import {
 	generateDefaultFilename,
 	validateFilename,
@@ -16,7 +16,8 @@ import { saveToVault } from "../../Services/VaultExport";
 
 export class ExportModal extends Modal {
 	private canvas: HTMLCanvasElement;
-	private defaultFolder: string;
+	private exportFolders: string[];
+	private selectedFolder: string;
 	private selectedFormat: ExportFormat = "png";
 	private filenameInput: TextComponent;
 	private extensionDisplay: HTMLElement;
@@ -26,10 +27,12 @@ export class ExportModal extends Modal {
 	private svgColorInput: HTMLInputElement;
 	private svgTintColor: string = "";
 
-	constructor(app: App, canvas: HTMLCanvasElement, defaultFolder: string) {
+	constructor(app: App, canvas: HTMLCanvasElement, exportFolders: string[]) {
 		super(app);
 		this.canvas = canvas;
-		this.defaultFolder = defaultFolder;
+		this.exportFolders =
+			exportFolders && exportFolders.length > 0 ? exportFolders : ["Scanned"];
+		this.selectedFolder = this.exportFolders[0];
 	}
 
 	onOpen() {
@@ -146,13 +149,24 @@ export class ExportModal extends Modal {
 		const section = container.createDiv("export-folder-section");
 
 		const heading = section.createEl("h4");
-		heading.textContent = "Save to:";
+		heading.textContent = "Save to destination folder:";
 
-		const folderPath = section.createDiv("export-folder-path");
-		folderPath.textContent = this.defaultFolder || "Root folder";
+		const dropdownWrapper = section.createDiv("export-folder-dropdown-wrapper");
+		const dropdown = new DropdownComponent(dropdownWrapper);
+		dropdown.selectEl.addClass("export-folder-select");
+
+		for (const folder of this.exportFolders) {
+			const displayLabel = folder.trim() === "" ? "Root folder (/)" : folder;
+			dropdown.addOption(folder, displayLabel);
+		}
+
+		dropdown.setValue(this.selectedFolder);
+		dropdown.onChange((value) => {
+			this.selectedFolder = value;
+		});
 
 		const note = section.createDiv("export-folder-note");
-		note.textContent = "(change default folder in plugin settings)";
+		note.textContent = "(manage destination folders in plugin settings)";
 	}
 
 	private buildActionButtons(container: HTMLElement): void {
@@ -216,7 +230,7 @@ export class ExportModal extends Modal {
 				// Save to vault
 				const file = await saveToVault(
 					this.app.vault,
-					this.defaultFolder,
+					this.selectedFolder,
 					filenameWithExtension,
 					blob,
 				);

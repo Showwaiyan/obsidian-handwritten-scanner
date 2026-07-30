@@ -9,18 +9,18 @@ import { ExportModal } from "UI/Modals/ExportModal";
 export class ExportControls {
 	private app: App;
 	private getCanvas: () => HTMLCanvasElement;
-	private defaultFolder: string;
+	private exportFolders: string[];
 	private isImageLoaded: () => boolean;
 
 	constructor(
 		app: App,
 		getCanvas: () => HTMLCanvasElement,
-		defaultFolder: string,
+		exportFolders: string[],
 		isImageLoaded: () => boolean,
 	) {
 		this.app = app;
 		this.getCanvas = getCanvas;
-		this.defaultFolder = defaultFolder;
+		this.exportFolders = exportFolders;
 		this.isImageLoaded = isImageLoaded;
 	}
 
@@ -44,6 +44,6 @@ export class ExportControls {
 		}
 
 		// Open export modal
-		new ExportModal(this.app, this.getCanvas(), this.defaultFolder).open();
+		new ExportModal(this.app, this.getCanvas(), this.exportFolders).open();
 	}
 }

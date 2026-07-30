@@ -20,6 +20,7 @@ export default defineConfig({
 	},
 	resolve: {
 		alias: {
+			obsidian: path.resolve(__dirname, "./test/mocks/obsidian.ts"),
 			Services: path.resolve(__dirname, "./Services"),
 			UI: path.resolve(__dirname, "./UI"),
 		},
