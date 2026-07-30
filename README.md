@@ -1,4 +1,4 @@
-# Obsidian Handwritten Scanner
+# Scan Sketch
 
 A powerful Obsidian plugin for scanning, processing, and enhancing handwritten notes and documents. Transform photos of your handwritten notes into clean, processed images with automatic perspective correction, background removal, and advanced filtering.
 
@@ -54,10 +54,10 @@ A powerful Obsidian plugin for scanning, processing, and enhancing handwritten n
 
 ## Installation
 
-### From Obsidian Community Plugins (Coming Soon)
+### From Obsidian Community Plugins
 1. Open Obsidian Settings
 2. Navigate to Community Plugins
-3. Search for "Handwritten Scanner"
+3. Search for "Scan Sketch"
 4. Click Install
 5. Enable the plugin
 
@@ -133,7 +133,7 @@ BRAT will automatically keep the plugin updated with the latest releases.
 
 ## Settings
 
-Access plugin settings via Settings → Obsidian Handwritten Scanner:
+Access plugin settings via Settings → Scan Sketch:
 
 - **Export Default Folder**: Set the default folder for saving scanned images (default: root)
 
@@ -178,7 +178,7 @@ This applies a manila (tan) page background with black pen styling and recolors 
 ### Project Structure
 
 ```
-obsidian-handwritten-scanner/
+obsidian-scan-sketch/
 ├── main.ts                 # Plugin entry point
 ├── Services/              # Business logic & utilities
 │   ├── CanvasRenderer.ts       # Canvas drawing utilities
@@ -230,7 +230,7 @@ obsidian-handwritten-scanner/
 ### Setup
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/obsidian-handwritten-scanner.git
+git clone https://github.com/Showwaiyan/obsidian-scan-sketch.git
 
 # Install dependencies
 npm install
@@ -332,8 +332,8 @@ This project is licensed under the OBSD License - see the LICENSE file for detai
 
 ## Support
 
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/yourusername/obsidian-handwritten-scanner/issues)
-- **Discussions**: Ask questions in [GitHub Discussions](https://github.com/yourusername/obsidian-handwritten-scanner/discussions)
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/Showwaiyan/obsidian-scan-sketch/issues)
+- **Discussions**: Ask questions in [GitHub Discussions](https://github.com/Showwaiyan/obsidian-scan-sketch/discussions)
 - **Documentation**: See [Obsidian Plugin Guidelines](https://docs.obsidian.md/Plugins)
 
 ## Acknowledgments
