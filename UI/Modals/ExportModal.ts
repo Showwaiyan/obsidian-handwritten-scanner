@@ -61,7 +61,7 @@ export class ExportModal extends Modal {
 		this.svgColorSection.style.display = "none";
 
 		const heading = this.svgColorSection.createEl("h4");
-		heading.textContent = "Image color:";
+		heading.textContent = "Stroke color:";
 
 		const wrapper = this.svgColorSection.createDiv("export-svg-color-wrapper");
 		this.svgColorInput = wrapper.createEl("input", {
