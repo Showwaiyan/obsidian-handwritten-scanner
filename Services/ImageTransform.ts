@@ -67,7 +67,7 @@ export function performPerspectiveCrop(
 		];
 
 		// Create perspective transform
-		const perspT = PerspT(srcPoints, dstPoints);
+		const perspT: { transformInverse: (x: number, y: number) => [number, number] } = PerspT(srcPoints, dstPoints);
 
 		// Create output image data
 		const outputImageData = new ImageData(dimensions.width, dimensions.height);
@@ -108,10 +108,11 @@ export function performPerspectiveCrop(
 		};
 
 	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error);
 		console.error("Error during perspective crop:", error);
 		return {
 			success: false,
-			message: `Crop failed: ${error.message}`,
+			message: `Crop failed: ${msg}`,
 		};
 	}
 }
@@ -131,7 +132,8 @@ export function createImageFromImageData(
 ): Promise<HTMLImageElement> {
 	return new Promise((resolve, reject) => {
 		// Create temporary canvas matching ImageData dimensions (handles DPR correctly)
-		const tempCanvas = document.createElement("canvas");
+		const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
+		const tempCanvas = doc.createElement("canvas");
 		tempCanvas.width = width ?? imageData.width;
 		tempCanvas.height = height ?? imageData.height;
 		const tempCtx = tempCanvas.getContext("2d");

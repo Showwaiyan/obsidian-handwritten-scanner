@@ -213,7 +213,7 @@ export class ScannerModal extends Modal {
 			this.setButtonsEnabled(false);
 
 			// Add a small delay to allow UI to update
-			await new Promise(resolve => setTimeout(resolve, 100));
+			await new Promise(resolve => window.setTimeout(resolve, 100));
 
 			// Perform the perspective crop
 			const result = this.canvas.performPerspectiveCrop();
@@ -229,7 +229,7 @@ export class ScannerModal extends Modal {
 				new Notice(result.message, 3000);
 
 				// Wait a brief moment for the crop to render
-				await new Promise(resolve => setTimeout(resolve, 100));
+				await new Promise(resolve => window.setTimeout(resolve, 100));
 
 				// Hide crop confirmation buttons and show main buttons
 				this.confirmButtonWrapper.hide();
@@ -301,7 +301,7 @@ export class ScannerModal extends Modal {
 			this.processingNotice = new Notice("Removing background...", 0);
 
 			// Add a small delay to allow UI to update
-			await new Promise(resolve => setTimeout(resolve, 100));
+			await new Promise(resolve => window.setTimeout(resolve, 100));
 
 			const result = await this.canvas.applyBackgroundRemoval();
 

@@ -133,7 +133,7 @@ export class ImagePreview {
 		this.setupInputEvents();
 
 		// Wait for next frame to ensure parent has dimensions
-		requestAnimationFrame(() => {
+		window.requestAnimationFrame(() => {
 			this.resize();
 			this.initializePlaceholder();
 		});
@@ -167,10 +167,12 @@ export class ImagePreview {
 		let clientX: number;
 		let clientY: number;
 
+		const isTouch = (event as any).instanceOf ? (event as any).instanceOf(TouchEvent) : (event instanceof TouchEvent);
+
 		if (event instanceof MouseEvent) {
 			clientX = event.clientX;
 			clientY = event.clientY;
-		} else if (event instanceof TouchEvent && event.touches.length > 0) {
+		} else if (isTouch && event.touches.length > 0) {
 			clientX = event.touches[0].clientX;
 			clientY = event.touches[0].clientY;
 		} else {
@@ -358,7 +360,6 @@ export class ImagePreview {
 	private initializePlaceholder() {
 		const cssWidth = parseInt(this.canvas.style.width);
 		const cssHeight = parseInt(this.canvas.style.height);
-		const dpr = window.devicePixelRatio || 1;
 
 		renderPlaceholder(this.ctx, cssWidth, cssHeight, this.placeholderConfig);
 	}
@@ -378,7 +379,7 @@ export class ImagePreview {
 			this.filterConfig = { ...DEFAULT_FILTER_CONFIG };
 			
 			// Small delay for mobile to ensure DOM is ready
-			setTimeout(() => {
+			window.setTimeout(() => {
 				// Resize canvas to match image aspect ratio (eliminates letterboxing)
 				this.resizeToImage(this.img.width, this.img.height);
 
@@ -678,7 +679,7 @@ export class ImagePreview {
 
 		// Clear existing debounce timer
 		if (this.filterDebounceTimer !== null) {
-			clearTimeout(this.filterDebounceTimer);
+			window.clearTimeout(this.filterDebounceTimer);
 		}
 
 		// Debounce the redraw (wait 200ms after last update)
@@ -936,7 +937,8 @@ public exitBackgroundRemovalMode(): void {
 		const actualHeight = Math.floor(cssHeight * dpr);
 
 		// Create temporary canvas for clean image data (no checkerboard)
-		const tempCanvas = document.createElement("canvas");
+		const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
+		const tempCanvas = doc.createElement("canvas");
 		tempCanvas.width = actualWidth;
 		tempCanvas.height = actualHeight;
 		const tempCtx = tempCanvas.getContext("2d");
@@ -1002,7 +1004,8 @@ public exitBackgroundRemovalMode(): void {
 		const dpr = window.devicePixelRatio || 1;
 
 		// Create temporary canvas for clean export
-		const exportCanvas = document.createElement("canvas");
+		const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
+		const exportCanvas = doc.createElement("canvas");
 		exportCanvas.width = this.canvas.width;
 		exportCanvas.height = this.canvas.height;
 		const exportCtx = exportCanvas.getContext("2d");

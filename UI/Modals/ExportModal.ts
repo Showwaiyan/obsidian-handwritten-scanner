@@ -82,7 +82,7 @@ export class ExportModal extends Modal {
 		this.svgColorInput = wrapper.createEl("input", {
 			type: "color",
 			attr: { id: "svg-tint-color" },
-		}) as HTMLInputElement;
+		});
 
 		const label = wrapper.createEl("label", {
 			attr: { for: "svg-tint-color" },
@@ -189,7 +189,7 @@ export class ExportModal extends Modal {
 		this.insertLinkCheckbox = wrapper.createEl("input", {
 			type: "checkbox",
 			attr: { id: "insert-link-checkbox" },
-		}) as HTMLInputElement;
+		});
 		this.insertLinkCheckbox.checked = true;
 		this.insertLinkCheckbox.addEventListener("change", () => {
 			this.shouldInsertLink = this.insertLinkCheckbox.checked;
@@ -233,7 +233,9 @@ export class ExportModal extends Modal {
 			.setButtonText("Export")
 			.setIcon("download")
 			.setCta()
-			.onClick(() => this.handleExport());
+			.onClick(() => {
+				void this.handleExport();
+			});
 
 		// Cancel button
 		new ButtonComponent(buttonWrapper)
@@ -243,7 +245,7 @@ export class ExportModal extends Modal {
 
 	private saveFormatPreference(): void {
 		this.plugin.settings.exportDefaultFormat = this.selectedFormat;
-		this.plugin.saveSettings();
+		void this.plugin.saveSettings();
 	}
 
 	private updateExtensionDisplay(): void {
@@ -330,12 +332,14 @@ export class ExportModal extends Modal {
 				processingNotice.hide();
 
 				// Show error notice
-				new Notice(error.message, 5000);
+				const msg = error instanceof Error ? error.message : String(error);
+				new Notice(msg, 5000);
 			}
 		} catch (error) {
 			console.error("Export error:", error);
+			const msg = error instanceof Error ? error.message : String(error);
 			new Notice(
-				`Export failed: ${error.message}\nCheck console for details.`,
+				`Export failed: ${msg}\nCheck console for details.`,
 				6000,
 			);
 		}

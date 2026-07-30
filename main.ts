@@ -50,7 +50,7 @@ export default class HandWrittenPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData(),
+			(await this.loadData() as Partial<HandwrittenScannerSettings> | null) || {},
 		);
 
 		// Migration / Fallback: If exportFolders is empty or not an array, use exportDefaultFolder or default to ["Scanned"]
@@ -80,6 +80,26 @@ class HandwrittenScannerSettingTab extends PluginSettingTab {
 	constructor(app: App, plugin: HandWrittenPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
+	}
+
+	getSettingDefinitions() {
+		return [
+			{
+				id: "exportFolders",
+				name: "Destination folders",
+				description: "Manage destination folders for saving scanned images.",
+			},
+			{
+				id: "exportDefaultFormat",
+				name: "Default export format",
+				description: "Default file format for exporting scanned images",
+			},
+			{
+				id: "closeAfterExport",
+				name: "Close scanner after export",
+				description: "Automatically close the scanner window after successfully exporting an image",
+			},
+		];
 	}
 
 	display(): void {

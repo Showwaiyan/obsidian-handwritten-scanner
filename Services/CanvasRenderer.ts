@@ -282,7 +282,8 @@ export function renderMagnifier(
 	);
 
 	// Create temporary canvas for magnified content
-	const tempCanvas = document.createElement("canvas");
+	const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
+	const tempCanvas = doc.createElement("canvas");
 	const destSize = config.radius * 2;
 	tempCanvas.width = destSize;
 	tempCanvas.height = destSize;
@@ -293,7 +294,7 @@ export function renderMagnifier(
 	}
 
 	// Create a temporary canvas to hold the sampled image data at original size
-	const sampleCanvas = document.createElement("canvas");
+	const sampleCanvas = doc.createElement("canvas");
 	sampleCanvas.width = actualSourceSize;
 	sampleCanvas.height = actualSourceSize;
 	const sampleCtx = sampleCanvas.getContext("2d");
