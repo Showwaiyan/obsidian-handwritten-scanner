@@ -1,5 +1,6 @@
 import { App, ButtonComponent, Modal, Notice } from "obsidian";
 import { uploadImageToCanvas } from "Services/ImageUpload";
+import { detectPageCorners } from "Services/PageDetection";
 import { ImagePreview } from "UI/Components/ImagePreview";
 import { FilterControls } from "UI/Components/FilterControls";
 import { BackgroundRemovalControls } from "UI/Components/BackgroundRemovalControls";
@@ -17,6 +18,7 @@ export class ScannerModal extends Modal {
 	private btnPhotoUpload: ButtonComponent;
 	private btnPhotoRotateCW: ButtonComponent;
 	private btnPhotoRotateACW: ButtonComponent;
+	private btnDetectCorners: ButtonComponent;
 	private btnCrop: ButtonComponent;
 	private btnRemoveBG: ButtonComponent;
 	private btnEdit: ButtonComponent;
@@ -91,6 +93,11 @@ export class ScannerModal extends Modal {
 				}
 			});
 
+		this.btnDetectCorners = new ButtonComponent(this.buttonWrapper)
+			.setIcon("scan")
+			.setTooltip("Detect page corners")
+			.onClick(() => this.detectAndShowCorners());
+
 		this.btnCrop = new ButtonComponent(this.buttonWrapper)
 			.setIcon("crop")
 			.setTooltip("Crop image")
@@ -121,8 +128,9 @@ export class ScannerModal extends Modal {
 		this.exportControls = new ExportControls(
 			this.app,
 			() => this.canvas.getExportCanvas(),
-			this.plugin.settings.exportFolders,
+			this.plugin,
 			() => this.canvas.isImageLoaded(),
+			() => this.close(), // Close scanner modal after export
 		);
 		this.btnExport = this.exportControls.createExportButton(this.buttonWrapper);
 
@@ -139,12 +147,59 @@ export class ScannerModal extends Modal {
 			.onClick(() => this.cancelCrop());
 	}
 
+	private detectAndShowCorners() {
+		if (!this.canvas.isImageLoaded()) {
+			new Notice("Please upload photo first!");
+			return;
+		}
+
+		// Get image data for page detection
+		const exportCanvas = this.canvas.getExportCanvas();
+		const ctx = exportCanvas.getContext("2d");
+		if (!ctx) {
+			new Notice("Failed to get canvas context");
+			return;
+		}
+
+		const imageData = ctx.getImageData(0, 0, exportCanvas.width, exportCanvas.height);
+		const dpr = window.devicePixelRatio || 1;
+		
+		new Notice("Detecting page corners...", 2000);
+		
+		// Attempt auto-detection
+		const detectedCorners = detectPageCorners(imageData);
+		
+		if (detectedCorners) {
+			// Scale corners from device pixels to CSS pixels
+			const scaledCorners = detectedCorners.map(corner => ({
+				x: corner.x / dpr,
+				y: corner.y / dpr,
+				isDragging: false
+			}));
+			
+			new Notice(`✓ Detected corners at: TL(${Math.round(scaledCorners[0].x)},${Math.round(scaledCorners[0].y)}) TR(${Math.round(scaledCorners[1].x)},${Math.round(scaledCorners[1].y)}) BL(${Math.round(scaledCorners[2].x)},${Math.round(scaledCorners[2].y)}) BR(${Math.round(scaledCorners[3].x)},${Math.round(scaledCorners[3].y)})`, 8000);
+			
+			// Show the detected corners on the canvas
+			const { success } = this.canvas.toggleCroppingPoints(true, scaledCorners);
+			if (success) {
+				// Hide main buttons and show confirm/cancel buttons
+				this.buttonWrapper.hide();
+				this.confirmButtonWrapper.show();
+			} else {
+				new Notice("Failed to display detected corners");
+			}
+		} else {
+			new Notice("✗ No page corners detected. Try adjusting the image or use manual crop.", 5000);
+		}
+	}
+
 	private toggleCropMode() {
 		const { success, message } = this.canvas.toggleCroppingPoints(true);
 		new Notice(message);
 		if (!success) {
 			return;
 		}
+		// Hide main buttons and show confirm/cancel buttons
 		this.buttonWrapper.hide();
 		this.confirmButtonWrapper.show();
 	}
@@ -297,6 +352,7 @@ export class ScannerModal extends Modal {
 		this.btnPhotoUpload.setDisabled(!enabled);
 		this.btnPhotoRotateCW.setDisabled(!enabled);
 		this.btnPhotoRotateACW.setDisabled(!enabled);
+		this.btnDetectCorners.setDisabled(!enabled);
 		this.btnCrop.setDisabled(!enabled);
 		this.btnRemoveBG.setDisabled(!enabled);
 		this.btnEdit.setDisabled(!enabled);
@@ -322,6 +378,11 @@ export class ScannerModal extends Modal {
 		// Clean up background removal controls
 		if (this.bgRemovalControls) {
 			this.bgRemovalControls.destroy();
+		}
+		
+		// Clean up export controls
+		if (this.exportControls) {
+			// No destroy method needed, just null it
 		}
 	}
 }

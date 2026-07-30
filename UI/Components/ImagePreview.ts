@@ -197,7 +197,6 @@ export class ImagePreview {
 		if (clickedIndex !== -1) {
 		this.draggedPointIndex = clickedIndex;
 		this.cropPoints = setCropPointDragging(this.cropPoints, clickedIndex, true);
-		console.debug(`Crop point ${clickedIndex} clicked at (${pos.x}, ${pos.y})`);
 		} else {
 			this.draggedPointIndex = -1;
 		}
@@ -253,7 +252,6 @@ export class ImagePreview {
 		if (clickedIndex !== -1) {
 		this.draggedPointIndex = clickedIndex;
 		this.cropPoints = setCropPointDragging(this.cropPoints, clickedIndex, true);
-		console.debug(`Crop point ${clickedIndex} touched at (${pos.x}, ${pos.y})`);
 		} else {
 			this.draggedPointIndex = -1;
 		}
@@ -360,39 +358,52 @@ export class ImagePreview {
 	private initializePlaceholder() {
 		const cssWidth = parseInt(this.canvas.style.width);
 		const cssHeight = parseInt(this.canvas.style.height);
-	const dpr = window.devicePixelRatio || 1;
+		const dpr = window.devicePixelRatio || 1;
 
-	console.debug("Canvas dimensions:", cssWidth, cssHeight, "DPR:", dpr);
-
-	renderPlaceholder(this.ctx, cssWidth, cssHeight, this.placeholderConfig);
+		renderPlaceholder(this.ctx, cssWidth, cssHeight, this.placeholderConfig);
 	}
 
 	public darawImage(file: File) {
+		// Clean up previous image if exists
+		if (this.img) {
+			if (this.img.src && this.img.src.startsWith('blob:')) {
+				URL.revokeObjectURL(this.img.src);
+			}
+		}
+		
 		this.img = new Image();
 
 		this.img.onload = () => {
 			// Reset filters when loading new image (as per user preference Option A)
 			this.filterConfig = { ...DEFAULT_FILTER_CONFIG };
 			
-			// Resize canvas to match image aspect ratio (eliminates letterboxing)
-			this.resizeToImage(this.img.width, this.img.height);
+			// Small delay for mobile to ensure DOM is ready
+			setTimeout(() => {
+				// Resize canvas to match image aspect ratio (eliminates letterboxing)
+				this.resizeToImage(this.img.width, this.img.height);
 
-			// Get NEW canvas dimensions after resize
-			const cssWidth = parseInt(this.canvas.style.width);
-			const cssHeight = parseInt(this.canvas.style.height);
+				// Get NEW canvas dimensions after resize
+				const cssWidth = parseInt(this.canvas.style.width);
+				const cssHeight = parseInt(this.canvas.style.height);
 
-			// Clear canvas and draw checkerboard pattern for transparency visibility
-			fillCanvasWithCheckerboard(this.ctx, cssWidth, cssHeight);
+				// Clear canvas and draw checkerboard pattern for transparency visibility
+				fillCanvasWithCheckerboard(this.ctx, cssWidth, cssHeight);
 
-			// Image fills entire canvas (no letterboxing, maximum resolution)
-			this.imgX = 0;
-			this.imgY = 0;
-			this.imgWidth = cssWidth;
-			this.imgHeight = cssHeight;
+				// Image fills entire canvas (no letterboxing, maximum resolution)
+				this.imgX = 0;
+				this.imgY = 0;
+				this.imgWidth = cssWidth;
+				this.imgHeight = cssHeight;
 
-			// Draw image at full canvas size
-			this.ctx.drawImage(this.img, 0, 0, cssWidth, cssHeight);
+				// Draw image at full canvas size
+				this.ctx.drawImage(this.img, 0, 0, cssWidth, cssHeight);
 
+				URL.revokeObjectURL(this.img.src);
+			}, 50);
+		};
+		
+		this.img.onerror = () => {
+			console.error("Failed to load image");
 			URL.revokeObjectURL(this.img.src);
 		};
 
@@ -428,8 +439,6 @@ export class ImagePreview {
 			};
 	}
 	
-	console.debug("Rotation count:", this.toRotateDegree);
-	
 	// Clear crop points for safety (positions become invalid after rotation)
 		this.removeCroppingPoints();
 		
@@ -464,14 +473,18 @@ export class ImagePreview {
 		};
 	}
 
-	private drawCroppingPoints() {
-		// Initialize crop points at four corners of the image
-		this.cropPoints = initializeCropPoints({
-			x: this.imgX,
-			y: this.imgY,
-			width: this.imgWidth,
-			height: this.imgHeight,
-		});
+	private drawCroppingPoints(detectedPoints?: CropPoint[]) {
+		// Use detected points if provided, otherwise initialize at corners
+		if (detectedPoints && detectedPoints.length === 4) {
+			this.cropPoints = detectedPoints;
+		} else {
+			this.cropPoints = initializeCropPoints({
+				x: this.imgX,
+				y: this.imgY,
+				width: this.imgWidth,
+				height: this.imgHeight,
+			});
+		}
 
 		this.renderCroppingPointsOnCanvas();
 		this.croppingPointsVisible = true;
@@ -513,7 +526,7 @@ export class ImagePreview {
 		this.croppingPointsVisible = false;
 	}
 
-	public toggleCroppingPoints(show: boolean): OperationResult {
+	public toggleCroppingPoints(show: boolean, detectedPoints?: CropPoint[]): OperationResult {
 		let state = false;
 		let message = "";
 		if (this.img == null) {
@@ -521,9 +534,9 @@ export class ImagePreview {
 			message = "Please upload photo first!";
 		} else {
 			if (show) {
-				this.drawCroppingPoints();
+				this.drawCroppingPoints(detectedPoints);
 				state = true;
-				message = "Cropping points displayed";
+				message = detectedPoints ? "Auto-detected corners displayed" : "Cropping points displayed";
 			} else {
 				this.removeCroppingPoints();
 				state = true;
@@ -567,11 +580,6 @@ export class ImagePreview {
 		const actualHeight = Math.floor(cssHeight * dpr);
 		
 	const sourceImageData = this.ctx.getImageData(0, 0, actualWidth, actualHeight);
-
-	console.debug("Performing perspective crop:", {
-		points: this.cropPoints,
-		canvasDimensions: { cssWidth, cssHeight, actualWidth, actualHeight, dpr },
-	});
 
 	// Perform the transformation
 		const result = performPerspectiveCrop(
@@ -618,8 +626,6 @@ export class ImagePreview {
 			// Hide crop points
 			this.cropPoints = [];
 		this.croppingPointsVisible = false;
-
-		console.debug("Perspective crop completed successfully");
 		}).catch((error) => {
 			console.error("Error creating image from crop:", error);
 		});

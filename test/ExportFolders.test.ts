@@ -7,9 +7,15 @@ describe("ExportFolders", () => {
 	it("should initialize ExportModal with first folder from exportFolders", () => {
 		const mockApp = {} as App;
 		const canvas = document.createElement("canvas");
-		const folders = ["FolderA", "FolderB", "FolderC"];
+		const mockPlugin = {
+			settings: {
+				exportFolders: ["FolderA", "FolderB", "FolderC"],
+				exportDefaultFormat: "png",
+				closeAfterExport: true,
+			},
+		} as any;
 
-		const modal = new ExportModal(mockApp, canvas, folders);
+		const modal = new ExportModal(mockApp, canvas, mockPlugin);
 		expect((modal as any).exportFolders).toEqual(["FolderA", "FolderB", "FolderC"]);
 		expect((modal as any).selectedFolder).toBe("FolderA");
 	});
@@ -17,24 +23,37 @@ describe("ExportFolders", () => {
 	it("should fallback to ['Scanned'] if exportFolders is empty", () => {
 		const mockApp = {} as App;
 		const canvas = document.createElement("canvas");
+		const mockPlugin = {
+			settings: {
+				exportFolders: [],
+				exportDefaultFormat: "png",
+				closeAfterExport: true,
+			},
+		} as any;
 
-		const modal = new ExportModal(mockApp, canvas, []);
+		const modal = new ExportModal(mockApp, canvas, mockPlugin);
 		expect((modal as any).exportFolders).toEqual(["Scanned"]);
 		expect((modal as any).selectedFolder).toBe("Scanned");
 	});
 
-	it("should pass exportFolders through ExportControls to ExportModal", () => {
+	it("should pass plugin through ExportControls to ExportModal", () => {
 		const mockApp = {} as App;
 		const canvas = document.createElement("canvas");
-		const folders = ["Notes/Scans", "Projects/Drafts"];
+		const mockPlugin = {
+			settings: {
+				exportFolders: ["Notes/Scans", "Projects/Drafts"],
+				exportDefaultFormat: "png",
+				closeAfterExport: true,
+			},
+		} as any;
 
 		const controls = new ExportControls(
 			mockApp,
 			() => canvas,
-			folders,
+			mockPlugin,
 			() => true,
 		);
 
-		expect((controls as any).exportFolders).toEqual(folders);
+		expect((controls as any).plugin).toBe(mockPlugin);
 	});
 });

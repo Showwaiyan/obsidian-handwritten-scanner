@@ -12,6 +12,15 @@ export interface CropPoint {
 }
 
 /**
+ * JZS - a 2D point for document detection
+ */
+export interface Point {
+	x: number;
+	y: number;
+}
+
+
+/**
  * Represents image dimensions
  */
 export interface ImageDimensions {

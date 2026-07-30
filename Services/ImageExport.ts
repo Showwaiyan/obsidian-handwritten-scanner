@@ -3,7 +3,7 @@
  * Pure functions with no Obsidian API dependencies
  */
 
-export type ExportFormat = "png" | "svg";
+export type ExportFormat = "png" | "jpg" | "svg";
 
 /**
  * Parse a hex color string to {r, g, b}
@@ -59,6 +59,31 @@ export function validateFilename(
 	}
 
 	return { valid: true, message: "" };
+}
+
+/**
+ * Export canvas to JPG blob
+ * @param canvas - Canvas element to export
+ * @param quality - JPEG quality (0.0 to 1.0, default 0.92)
+ * @returns JPG blob
+ */
+export function exportCanvasToJPG(
+	canvas: HTMLCanvasElement,
+	quality: number = 0.92,
+): Promise<Blob> {
+	return new Promise((resolve, reject) => {
+		canvas.toBlob(
+			(blob) => {
+				if (blob) {
+					resolve(blob);
+				} else {
+					reject(new Error("Failed to create JPG blob"));
+				}
+			},
+			"image/jpeg",
+			quality,
+		);
+	});
 }
 
 /**
@@ -173,9 +198,11 @@ export async function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
 
 /**
  * Get file extension for export format
- * @param format - "png" or "svg"
+ * @param format - "png", "jpg", or "svg"
  * @returns File extension with dot (e.g., ".png")
  */
 export function getFileExtension(format: ExportFormat): string {
-	return format === "png" ? ".png" : ".svg";
+	if (format === "png") return ".png";
+	if (format === "jpg") return ".jpg";
+	return ".svg";
 }

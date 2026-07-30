@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Page Detection Test</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+				background: #f5f5f5;
+				padding: 20px;
+			}
+			.container {
+				max-width: 900px;
+				margin: 0 auto;
+				background: white;
+				border-radius: 8px;
+				padding: 30px;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+			}
+			h1 {
+				margin-bottom: 20px;
+				color: #333;
+			}
+			button {
+				padding: 10px 20px;
+				background: #2563eb;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 14px;
+				margin-bottom: 20px;
+			}
+			button:hover {
+				background: #1d4ed8;
+			}
+			input[type="file"] {
+				display: none;
+			}
+			.status {
+				margin-bottom: 20px;
+				padding: 10px;
+				background: #f0f0f0;
+				border-radius: 4px;
+				font-size: 14px;
+				font-family: monospace;
+				white-space: pre-wrap;
+			}
+			canvas {
+				max-width: 100%;
+				height: auto;
+				display: block;
+				border: 1px solid #ddd;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>📄 Page Detection Test</h1>
+			<p style="font-size: 12px; color: #888; margin-bottom: 16px;">Built: Sunday June 14 2026, 10:36 AM ET | <span id="version">loading...</span></p>
+			<button onclick="document.getElementById('fileInput').click()">📁 Choose Image</button>
+			<input type="file" id="fileInput" accept="image/*" />
+			<div class="status" id="status">Pick an image of a document/page to test detection.</div>
+			<canvas id="canvas"></canvas>
+		</div>
+
+		<script type="module">
+			import { detectPageCorners, PAGE_DETECTION_VERSION } from "./PageDetection.js";
+
+			document.getElementById("version").textContent = "PageDetection.ts: " + PAGE_DETECTION_VERSION;
+
+			const fileInput = document.getElementById("fileInput");
+			const canvas = document.getElementById("canvas");
+			const ctx = canvas.getContext("2d");
+			const status = document.getElementById("status");
+
+			fileInput.addEventListener("change", (e) => {
+				const file = e.target.files[0];
+				if (!file) return;
+
+				const img = new Image();
+				img.onload = () => {
+					canvas.width = img.width;
+					canvas.height = img.height;
+					ctx.drawImage(img, 0, 0);
+
+					const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+					const t0 = performance.now();
+					const corners = detectPageCorners(imageData);
+					const elapsed = (performance.now() - t0).toFixed(1);
+
+					if (!corners) {
+						status.textContent = `No page detected. (${elapsed}ms)`;
+						return;
+					}
+
+					const labels = ["TL", "TR", "BR", "BL"];
+					let text = `Detected corners (${elapsed}ms):\n`;
+					corners.forEach((c, i) => {
+						text += `  ${labels[i]}: (${c.x.toFixed(1)}, ${c.y.toFixed(1)})\n`;
+					});
+					status.textContent = text;
+
+					// Draw quad outline
+					ctx.strokeStyle = "#00ff00";
+					ctx.lineWidth = Math.max(2, img.width / 300);
+					ctx.beginPath();
+					ctx.moveTo(corners[0].x, corners[0].y);
+					for (let i = 1; i < corners.length; i++) {
+						ctx.lineTo(corners[i].x, corners[i].y);
+					}
+					ctx.closePath();
+					ctx.stroke();
+
+					// Draw corner markers: red=TL, blue=TR, yellow=BR, magenta=BL
+					const colors = ["#ff0000", "#0000ff", "#ffff00", "#ff00ff"];
+					const radius = Math.max(4, img.width / 100);
+					corners.forEach((c, i) => {
+						ctx.fillStyle = colors[i];
+						ctx.beginPath();
+						ctx.arc(c.x, c.y, radius, 0, 2 * Math.PI);
+						ctx.fill();
+					});
+				};
+				img.src = URL.createObjectURL(file);
+			});
+		</script>
+	</body>
+</html>

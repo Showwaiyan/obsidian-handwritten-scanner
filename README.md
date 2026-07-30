@@ -16,12 +16,12 @@ A powerful Obsidian plugin for scanning, processing, and enhancing handwritten n
 - **HiDPI Support**: Full support for high-resolution displays (Retina, 4K, etc.)
 
 ### 🎨 Advanced Image Enhancement
-- **Background Removal**: 
+- **Background Removal**:
   - Click-to-sample background color detection
   - Adjustable tolerance slider (0-50)
   - Real-time preview with checkerboard pattern for transparency
   - Export with true transparent background (PNG)
-  
+
 - **Image Filters**:
   - Brightness adjustment (-100 to +100)
   - Contrast enhancement (-100 to +100)
@@ -33,6 +33,7 @@ A powerful Obsidian plugin for scanning, processing, and enhancing handwritten n
 - **Multiple Formats**:
   - PNG (with transparency support)
   - SVG (embedded PNG wrapper)
+  - JPG
 - **Flexible Storage**:
   - Configurable default export folder
   - Automatic timestamp-based filename generation
@@ -45,7 +46,7 @@ A powerful Obsidian plugin for scanning, processing, and enhancing handwritten n
   - Magnifying loupe when dragging crop points
   - Real-time filter preview
   - Clear status notifications
-  
+
 - **Touch & Mouse Support**:
   - Responsive controls for both desktop and mobile
   - Larger touch targets (30px) for mobile devices

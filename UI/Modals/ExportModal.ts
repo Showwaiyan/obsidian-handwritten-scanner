@@ -1,13 +1,15 @@
 /**
- * Export modal for PNG/SVG export options
+ * Export modal for PNG/JPG/SVG export options
  * Provides UI for format selection, filename input, and folder configuration
  */
 
 import { App, Modal, Notice, ButtonComponent, TextComponent, DropdownComponent } from "obsidian";
+import type HandWrittenPlugin from "../../main";
 import {
 	generateDefaultFilename,
 	validateFilename,
 	exportCanvasToPNG,
+	exportCanvasToJPG,
 	exportCanvasToSVG,
 	getFileExtension,
 	type ExportFormat,
@@ -16,23 +18,33 @@ import { saveToVault } from "../../Services/VaultExport";
 
 export class ExportModal extends Modal {
 	private canvas: HTMLCanvasElement;
+	private plugin: HandWrittenPlugin;
 	private exportFolders: string[];
 	private selectedFolder: string;
-	private selectedFormat: ExportFormat = "png";
+	private selectedFormat: ExportFormat;
 	private filenameInput: TextComponent;
 	private extensionDisplay: HTMLElement;
 	private pngRadio: HTMLInputElement;
+	private jpgRadio: HTMLInputElement;
 	private svgRadio: HTMLInputElement;
 	private svgColorSection: HTMLElement;
 	private svgColorInput: HTMLInputElement;
 	private svgTintColor: string = "";
+	private insertLinkCheckbox: HTMLInputElement;
+	private shouldInsertLink: boolean = true;
+	private onExportComplete?: () => void;
 
-	constructor(app: App, canvas: HTMLCanvasElement, exportFolders: string[]) {
+	constructor(app: App, canvas: HTMLCanvasElement, plugin: HandWrittenPlugin, onExportComplete?: () => void) {
 		super(app);
 		this.canvas = canvas;
+		this.plugin = plugin;
+		this.selectedFormat = plugin.settings.exportDefaultFormat || "png";
 		this.exportFolders =
-			exportFolders && exportFolders.length > 0 ? exportFolders : ["Scanned"];
+			plugin.settings.exportFolders && plugin.settings.exportFolders.length > 0
+				? plugin.settings.exportFolders
+				: ["Scanned"];
 		this.selectedFolder = this.exportFolders[0];
+		this.onExportComplete = onExportComplete;
 	}
 
 	onOpen() {
@@ -49,6 +61,9 @@ export class ExportModal extends Modal {
 		// Filename input
 		this.buildFilenameInput(contentEl);
 
+		// Insert link checkbox
+		this.buildInsertLinkCheckbox(contentEl);
+
 		// Folder display
 		this.buildFolderDisplay(contentEl);
 
@@ -58,7 +73,7 @@ export class ExportModal extends Modal {
 
 	private buildSvgColorPicker(container: HTMLElement): void {
 		this.svgColorSection = container.createDiv("export-svg-color-section");
-		this.svgColorSection.style.display = "none";
+		this.svgColorSection.hide();
 
 		const heading = this.svgColorSection.createEl("h4");
 		heading.textContent = "Stroke color:";
@@ -95,11 +110,12 @@ export class ExportModal extends Modal {
 			type: "radio",
 			attr: { name: "export-format", id: "format-png" },
 		});
-		this.pngRadio.checked = true;
+		this.pngRadio.checked = this.selectedFormat === "png";
 		this.pngRadio.addEventListener("change", () => {
 			this.selectedFormat = "png";
-			this.svgColorSection.style.display = "none";
+			this.svgColorSection.hide();
 			this.updateExtensionDisplay();
+			this.saveFormatPreference();
 		});
 
 		const pngLabel = pngOption.createEl("label", {
@@ -107,16 +123,37 @@ export class ExportModal extends Modal {
 		});
 		pngLabel.textContent = "PNG";
 
+		// JPG radio option
+		const jpgOption = optionsWrapper.createDiv("export-format-option");
+		this.jpgRadio = jpgOption.createEl("input", {
+			type: "radio",
+			attr: { name: "export-format", id: "format-jpg" },
+		});
+		this.jpgRadio.checked = this.selectedFormat === "jpg";
+		this.jpgRadio.addEventListener("change", () => {
+			this.selectedFormat = "jpg";
+			this.svgColorSection.hide();
+			this.updateExtensionDisplay();
+			this.saveFormatPreference();
+		});
+
+		const jpgLabel = jpgOption.createEl("label", {
+			attr: { for: "format-jpg" },
+		});
+		jpgLabel.textContent = "JPG";
+
 		// SVG radio option
 		const svgOption = optionsWrapper.createDiv("export-format-option");
 		this.svgRadio = svgOption.createEl("input", {
 			type: "radio",
 			attr: { name: "export-format", id: "format-svg" },
 		});
+		this.svgRadio.checked = this.selectedFormat === "svg";
 		this.svgRadio.addEventListener("change", () => {
 			this.selectedFormat = "svg";
-			this.svgColorSection.style.display = "";
+			this.svgColorSection.show();
 			this.updateExtensionDisplay();
+			this.saveFormatPreference();
 		});
 
 		const svgLabel = svgOption.createEl("label", {
@@ -143,6 +180,25 @@ export class ExportModal extends Modal {
 			"export-filename-extension",
 		);
 		this.updateExtensionDisplay();
+	}
+
+	private buildInsertLinkCheckbox(container: HTMLElement): void {
+		const section = container.createDiv("export-insert-link-section");
+
+		const wrapper = section.createDiv("export-insert-link-wrapper");
+		this.insertLinkCheckbox = wrapper.createEl("input", {
+			type: "checkbox",
+			attr: { id: "insert-link-checkbox" },
+		}) as HTMLInputElement;
+		this.insertLinkCheckbox.checked = true;
+		this.insertLinkCheckbox.addEventListener("change", () => {
+			this.shouldInsertLink = this.insertLinkCheckbox.checked;
+		});
+
+		const label = wrapper.createEl("label", {
+			attr: { for: "insert-link-checkbox" },
+		});
+		label.textContent = "Insert markdown link into current note";
 	}
 
 	private buildFolderDisplay(container: HTMLElement): void {
@@ -185,6 +241,11 @@ export class ExportModal extends Modal {
 			.onClick(() => this.close());
 	}
 
+	private saveFormatPreference(): void {
+		this.plugin.settings.exportDefaultFormat = this.selectedFormat;
+		this.plugin.saveSettings();
+	}
+
 	private updateExtensionDisplay(): void {
 		if (this.extensionDisplay) {
 			this.extensionDisplay.textContent = getFileExtension(
@@ -215,17 +276,19 @@ export class ExportModal extends Modal {
 			// Show processing notice
 			const processingNotice = new Notice("Exporting...", 0);
 
-		try {
-			// Export canvas based on format
-			let blob: Blob;
-			if (this.selectedFormat === "png") {
-				blob = await exportCanvasToPNG(this.canvas);
-			} else {
-				blob = exportCanvasToSVG(
-					this.canvas,
-					this.svgTintColor || undefined,
-				);
-			}
+			try {
+				// Export canvas based on format
+				let blob: Blob;
+				if (this.selectedFormat === "png") {
+					blob = await exportCanvasToPNG(this.canvas);
+				} else if (this.selectedFormat === "jpg") {
+					blob = await exportCanvasToJPG(this.canvas);
+				} else {
+					blob = exportCanvasToSVG(
+						this.canvas,
+						this.svgTintColor || undefined,
+					);
+				}
 
 				// Save to vault
 				const file = await saveToVault(
@@ -235,6 +298,21 @@ export class ExportModal extends Modal {
 					blob,
 				);
 
+				// Insert markdown link if checkbox is checked
+				if (this.shouldInsertLink) {
+					const activeFile = this.app.workspace.getActiveFile();
+					if (activeFile) {
+						const editor = this.app.workspace.activeEditor?.editor;
+						if (editor) {
+							// Create markdown link to the image
+							const markdownLink = `![[${file.path}]]`;
+							// Insert at cursor position
+							const cursor = editor.getCursor();
+							editor.replaceRange(markdownLink + "\n", cursor);
+						}
+					}
+				}
+
 				// Hide processing notice
 				processingNotice.hide();
 
@@ -243,6 +321,10 @@ export class ExportModal extends Modal {
 
 				// Close modal
 				this.close();
+				// Call the completion callback to close scanner modal if enabled
+				if (this.plugin.settings.closeAfterExport && this.onExportComplete) {
+					this.onExportComplete();
+				}
 			} catch (error) {
 				// Hide processing notice
 				processingNotice.hide();
