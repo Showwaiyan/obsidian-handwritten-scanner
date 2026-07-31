@@ -11,7 +11,8 @@ A powerful Obsidian plugin for scanning, processing, and enhancing handwritten n
 
 ### 📸 Image Upload & Processing
 - **Multiple Input Methods**: Upload from file picker or capture directly from camera
-- **Smart Perspective Correction**: Automatically detect and correct document corners with interactive crop points
+- **Automatic Corner Detection**: One-click automatic page corner detection for physical notebook pages and documents
+- **Smart Perspective Correction**: Interactive four-corner crop handles with quadrilateral transform
 - **Rotation Controls**: Rotate images in 90-degree increments for proper orientation
 - **HiDPI Support**: Full support for high-resolution displays (Retina, 4K, etc.)
 
@@ -29,16 +30,17 @@ A powerful Obsidian plugin for scanning, processing, and enhancing handwritten n
   - Black & White conversion
   - Real-time preview with 200ms debouncing
 
-### 💾 Export Options
-- **Multiple Formats**:
+### 💾 Export & Storage Options
+- **Multiple Export Formats**:
   - PNG (with transparency support)
-  - SVG (embedded PNG wrapper)
-  - JPG
-- **Flexible Storage**:
-  - Configurable default export folder
+  - JPG (compact image format)
+  - SVG (embedded vector wrapper with customizable stroke color)
+- **Flexible Storage & Workflows**:
+  - **Multi-Destination Folders**: Select from multiple target vault folders via dropdown menu
+  - **Direct Markdown Link Insertion**: Automatically insert `![[folder/image.png]]` embed link into active note at cursor position
+  - **Auto-Close Scanner**: Optionally auto-close scanner window after successful export
   - Automatic timestamp-based filename generation
   - Custom filename support with validation
-  - Direct save to Obsidian vault
 
 ### 🎯 User Experience
 - **Visual Feedback**:
@@ -127,15 +129,16 @@ BRAT will automatically keep the plugin updated with the latest releases.
 ### Perspective Crop
 
 1. Click "Crop" button to show corner points
-2. Drag the four blue corner points to match document edges
-3. Click "Apply" to transform the quadrilateral into a rectangle
-4. The image automatically adjusts to the corrected perspective
+2. Click "Detect Corners" to automatically detect page edges, or manually drag the four corner points to match document borders
+3. Click "Apply" to transform the quadrilateral into a straight rectangle
 
 ## Settings
 
-Access plugin settings via Settings → Scan Sketch:
+Access plugin settings via **Settings → Scan Sketch**:
 
-- **Export Default Folder**: Set the default folder for saving scanned images (default: root)
+- **Destination Folders**: Manage multiple target vault folders for saving exported images
+- **Default Export Format**: Set default export file format (PNG, JPG, or SVG)
+- **Close Scanner After Export**: Toggle automatically closing the scanner modal upon successful export
 
 ## Optional: Enhanced Notebook Styling
 
@@ -179,18 +182,19 @@ This applies a manila (tan) page background with black pen styling and recolors 
 
 ```
 obsidian-scan-sketch/
-├── main.ts                 # Plugin entry point
-├── Services/              # Business logic & utilities
-│   ├── CanvasRenderer.ts       # Canvas drawing utilities
-│   ├── CropPointManager.ts     # Crop point logic
-│   ├── ImageBackgroundRemoval.ts  # Background removal algorithms
-│   ├── ImageExport.ts          # PNG/SVG export
-│   ├── ImageFilter.ts          # Image filtering
+├── main.ts                 # Plugin entry point & settings tab
+├── Services/              # Business logic & stateless utilities
+│   ├── CanvasRenderer.ts       # Canvas drawing & magnifier utilities
+│   ├── CropPointManager.ts     # Crop point validation & dragging
+│   ├── ImageBackgroundRemoval.ts  # Color sampling & background removal
+│   ├── ImageExport.ts          # PNG/JPG/SVG export encoders
+│   ├── ImageFilter.ts          # Brightness, contrast, saturation, B&W
 │   ├── ImageTransform.ts       # Rotation & perspective transforms
-│   ├── ImageUpload.ts          # File upload handling
-│   ├── Interaction.ts          # User interaction utilities
-│   ├── VaultExport.ts          # Obsidian vault operations
-│   └── types.ts                # TypeScript type definitions
+│   ├── ImageUpload.ts          # File picker & camera capture
+│   ├── Interaction.ts          # Hit testing & pointer interaction
+│   ├── PageDetection.ts        # Automatic corner & edge detection
+│   ├── VaultExport.ts          # Obsidian vault file saving
+│   └── types.ts                # TypeScript interfaces & types
 ├── UI/                    # User interface components
 │   ├── Components/
 │   │   ├── BackgroundRemovalControls.ts
@@ -200,8 +204,8 @@ obsidian-scan-sketch/
 │   └── Modals/
 │       ├── ExportModal.ts
 │       └── scannerModal.ts
-├── test/                  # Vitest test suite
-└── styles.css            # Plugin styles
+├── test/                  # Vitest unit test suite (136 tests)
+└── styles.css            # Plugin CSS styling
 ```
 
 ### Key Technologies
@@ -215,7 +219,7 @@ obsidian-scan-sketch/
 
 ### Code Quality
 
-- **Testing**: 125+ unit tests with >90% coverage
+- **Testing**: 136 unit tests with >90% coverage
 - **Linting**: ESLint with TypeScript support
 - **Formatting**: EditorConfig (tabs, double quotes, LF)
 - **Type Safety**: Strict TypeScript configuration
