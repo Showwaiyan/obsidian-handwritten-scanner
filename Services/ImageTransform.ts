@@ -67,7 +67,12 @@ export function performPerspectiveCrop(
 		];
 
 		// Create perspective transform
-		const perspT: { transformInverse: (x: number, y: number) => [number, number] } = PerspT(srcPoints, dstPoints);
+		type PerspTransformFn = (
+			src: number[],
+			dst: number[],
+		) => { transformInverse: (x: number, y: number) => [number, number] };
+		const createPerspT = PerspT as unknown as PerspTransformFn;
+		const perspT = createPerspT(srcPoints, dstPoints);
 
 		// Create output image data
 		const outputImageData = new ImageData(dimensions.width, dimensions.height);
@@ -132,8 +137,7 @@ export function createImageFromImageData(
 ): Promise<HTMLImageElement> {
 	return new Promise((resolve, reject) => {
 		// Create temporary canvas matching ImageData dimensions (handles DPR correctly)
-		const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
-		const tempCanvas = doc.createElement("canvas");
+		const tempCanvas = createEl("canvas");
 		tempCanvas.width = width ?? imageData.width;
 		tempCanvas.height = height ?? imageData.height;
 		const tempCtx = tempCanvas.getContext("2d");

@@ -1,5 +1,32 @@
 import { beforeEach, vi } from "vitest";
 
+// Polyfill Obsidian's createEl helper in test environment
+if (typeof Element !== "undefined" && !(Element.prototype as any).createEl) {
+	(Element.prototype as any).createEl = function (tag: string, o?: any) {
+		const el = document.createElement(tag);
+		if (o) {
+			if (o.type) (el as any).type = o.type;
+			if (o.cls) el.className = o.cls;
+		}
+		this.appendChild(el);
+		return el;
+	};
+}
+
+if (typeof (globalThis as any).createEl === "undefined") {
+	(globalThis as any).createEl = function <K extends keyof HTMLElementTagNameMap>(
+		tag: K,
+		o?: any,
+	): HTMLElementTagNameMap[K] {
+		const el = document.createElement(tag);
+		if (o) {
+			if (o.type) (el as any).type = o.type;
+			if (o.cls) el.className = o.cls;
+		}
+		return el as HTMLElementTagNameMap[K];
+	};
+}
+
 // Create a shared mock context that persists across operations
 let mockCtx: any;
 

@@ -121,8 +121,7 @@ export function tintCanvasImage(
 	canvas: HTMLCanvasElement,
 	tintColor: string,
 ): HTMLCanvasElement {
-	const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
-	const tempCanvas = doc.createElement("canvas");
+	const tempCanvas = createEl("canvas");
 	tempCanvas.width = canvas.width;
 	tempCanvas.height = canvas.height;
 

@@ -1,6 +1,5 @@
 export function uploadImageToCanvas(drawImageOnCanvas: (file: File) => void) {
-	const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
-	const input = doc.createElement("input");
+	const input = createEl("input");
 	input.type = "file";
 	input.accept = "image/*";
 	// Remove capture="camera" to allow both camera and photo library on mobile

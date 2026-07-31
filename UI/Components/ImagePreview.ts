@@ -167,14 +167,17 @@ export class ImagePreview {
 		let clientX: number;
 		let clientY: number;
 
-		const isTouch = (event as any).instanceOf ? (event as any).instanceOf(TouchEvent) : (event instanceof TouchEvent);
-
-		if (event instanceof MouseEvent) {
+		if (event.type.startsWith("touch")) {
+			const touchEvent = event as TouchEvent;
+			if (touchEvent.touches.length > 0) {
+				clientX = touchEvent.touches[0].clientX;
+				clientY = touchEvent.touches[0].clientY;
+			} else {
+				return null;
+			}
+		} else if (event instanceof MouseEvent) {
 			clientX = event.clientX;
 			clientY = event.clientY;
-		} else if (isTouch && event.touches.length > 0) {
-			clientX = event.touches[0].clientX;
-			clientY = event.touches[0].clientY;
 		} else {
 			return null;
 		}
@@ -937,8 +940,7 @@ public exitBackgroundRemovalMode(): void {
 		const actualHeight = Math.floor(cssHeight * dpr);
 
 		// Create temporary canvas for clean image data (no checkerboard)
-		const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
-		const tempCanvas = doc.createElement("canvas");
+		const tempCanvas = createEl("canvas");
 		tempCanvas.width = actualWidth;
 		tempCanvas.height = actualHeight;
 		const tempCtx = tempCanvas.getContext("2d");
@@ -1004,8 +1006,7 @@ public exitBackgroundRemovalMode(): void {
 		const dpr = window.devicePixelRatio || 1;
 
 		// Create temporary canvas for clean export
-		const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
-		const exportCanvas = doc.createElement("canvas");
+		const exportCanvas = createEl("canvas");
 		exportCanvas.width = this.canvas.width;
 		exportCanvas.height = this.canvas.height;
 		const exportCtx = exportCanvas.getContext("2d");
